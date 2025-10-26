@@ -1,5 +1,4 @@
 #!/bin/sh
-cd backend && sudo mkdir docker
 sudo chown -R 100:100 ./backend/docker
 sudo chmod -R 755 ./backend/docker
 docker compose build

@@ -1,0 +1,76 @@
+<script>
+  import { setAuth } from "$lib/stores/auth.js";
+  import { goto } from "$app/navigation";
+
+  let username = "";
+  let password = "";
+  let error = "";
+  let loading = false;
+
+  async function handleLogin(event) {
+    event.preventDefault();
+    error = "";
+    loading = true;
+
+    try {
+      const res = await fetch("http://localhost:3000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setAuth({ userId: data.userId }, data.token || "mock-token");
+        goto("/prompts");
+      } else {
+        error = "Invalid username or password.";
+      }
+    } catch (e) {
+      error = "Could not reach backend.";
+    } finally {
+      loading = false;
+    }
+  }
+</script>
+
+<div class="flex items-center justify-center min-h-screen bg-gray-50">
+  <form
+    class="bg-white p-6 rounded shadow-md w-full max-w-sm"
+    on:submit|preventDefault={handleLogin}
+  >
+    <h1 class="text-2xl font-bold mb-4 text-blue-700">Login</h1>
+    <div class="mb-4">
+      <label for="username" class="block text-gray-600 mb-1">Username</label>
+      <input
+        id="username"
+        class="w-full border px-3 py-2 rounded focus:outline-blue-500"
+        bind:value={username}
+        type="text"
+        required
+        autocomplete="username"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="password" class="block text-gray-600 mb-1">Password</label>
+      <input
+        id="password"
+        class="w-full border px-3 py-2 rounded focus:outline-blue-500"
+        bind:value={password}
+        type="password"
+        required
+        autocomplete="current-password"
+      />
+    </div>
+    {#if error}
+      <div class="text-red-600 mb-3">{error}</div>
+    {/if}
+    <button
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold"
+      type="submit"
+      disabled={loading}
+    >
+      {loading ? "Logging in..." : "Login"}
+    </button>
+  </form>
+</div>

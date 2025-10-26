@@ -1,0 +1,61 @@
+services:
+  consul:
+    image: consul:1.15
+    ports:
+      - "8500:8500"
+    command: "agent -server -bootstrap -ui -client 0.0.0.0 -data-dir /consul/data -config-dir consul/config"
+    volumes:
+      - ./docker/data/consul/data:/consul/data
+      - ./docker/data/consul/config:/consul/config
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - consul
+    restart: always
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      - consul
+    restart: always
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+
+  prompt-service:
+    build: ./prompt-service
+    ports:
+      - "3002:3000"
+    restart: always
+    depends_on:
+      - consul
+      - rabbitmq
+
+  reporting-service:
+    build: ./reporting-service
+    ports:
+      - "3003:3000"
+    restart: always
+    depends_on:
+      - consul
+      - rabbitmq
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "3006:3006"
+    restart: always
+    depends_on:
+      - consul

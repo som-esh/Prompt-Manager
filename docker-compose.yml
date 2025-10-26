@@ -1,0 +1,75 @@
+services:
+  consul:
+    image: consul:1.15
+    ports:
+      - "8500:8500"
+    command: "agent -server -bootstrap -ui -client 0.0.0.0 -data-dir /consul/data -config-dir consul/config"
+    volumes:
+      - ./backend/docker/data/consul/data:/consul/data
+      - ./backend/docker/data/consul/config:/consul/config
+
+  api-gateway:
+    build: ./backend/api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - consul
+    restart: always
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      - consul
+    restart: always
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  prompt-service:
+    build: ./backend/prompt-service
+    ports:
+      - "3002:3000"
+    restart: always
+    depends_on:
+      - consul
+      - rabbitmq
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/prompt-manager
+      - CONSUL_HTTP_ADDR=http://consul:8500
+
+  reporting-service:
+    build: ./backend/reporting-service
+    ports:
+      - "3003:3000"
+    restart: always
+    depends_on:
+      - consul
+      - rabbitmq
+  
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  notification-service:
+    build: ./backend/notification-service
+    ports:
+      - "3006:3006"
+    restart: always
+    depends_on:
+      - consul
+
+volumes:
+  mongodb_data:

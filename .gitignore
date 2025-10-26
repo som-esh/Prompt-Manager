@@ -1,5 +1,11 @@
-# Consul data files
-backend/docker/data/*
+# Consul directories - track directory structure but exclude all content files
+# This ensures the directories exist for Docker volumes while keeping the repo clean
+backend/docker/data/consul/data/**
+backend/docker/data/consul/config/**
+
+# Force include directory placeholders if they exist
+!backend/docker/data/consul/data/.gitkeep
+!backend/docker/data/consul/config/.gitkeep
 
 # Node modules
 node_modules/
